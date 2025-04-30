@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, RouteLocationNormalizedLoaded } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 // Define types
 type StorageOption = '128GB' | '256GB' | '512GB' | '1TB'
@@ -24,8 +24,11 @@ interface ColorOption {
 }
 
 // Routing and state
-const route = useRoute<RouteLocationNormalizedLoaded<{ id: ProductID }>>()
-const productId = computed<ProductID>(() => route.params.id)
+const route = useRoute()
+const productId = computed<ProductID>(() => {
+  const raw = route.params.id
+  return (Array.isArray(raw) ? raw[0] : raw) as ProductID
+})
 
 // Data definitions
 const colors: ColorOption[] = [
@@ -138,8 +141,8 @@ const activeImage = ref(0)
 
 // Computed price display
 const price = computed<string>(() => {
-  const basePrice = product.value.price[selectedStorage.value]
-  return basePrice === null ? 'Not Available' : `$${basePrice}`
+  const base = product.value.price[selectedStorage.value]
+  return base === null ? 'Not Available' : `$${base}`
 })
 
 // Handlers
@@ -154,12 +157,19 @@ onMounted(() => {
   imagesRef.value?.classList.add('fade-in')
   detailsRef.value?.classList.add('slide-up')
 })
+
+// Related products (exclude current)
+const relatedProducts = computed(() =>
+  Object.entries(products)
+    .filter(([key]) => key !== productId.value)
+    .map(([id, prod]) => ({ id, ...prod }))
+)
 </script>
 
 <template>
   <div v-if="product">
-    <!-- Hero section -->
-    <section class="pt-20 pb-16 md:pt-28 md:pb-24 bg-white dark:bg-gray-900 transition-colors duration-300">
+   <!-- Hero section -->
+   <section class="pt-20 pb-16 md:pt-28 md:pb-24 bg-white dark:bg-gray-900 transition-colors duration-300">
       <div class="container mx-auto px-4">
         <div class="flex flex-col lg:flex-row gap-12">
           <!-- Images section -->
@@ -323,27 +333,25 @@ onMounted(() => {
         </div>
       </div>
     </section>
-
     <!-- Related products -->
     <section class="py-16 bg-white dark:bg-gray-900 transition-colors duration-300">
       <div class="container mx-auto px-4">
         <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">You May Also Like</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div
-            v-for="(rel, id) in products"
-            :key="id"
-            v-if="id !== productId"
+            v-for="item in relatedProducts"
+            :key="item.id"
             class="bg-gray-50 dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
           >
-            <img :src="rel.images[0]" :alt="rel.name" class="w-full h-48 object-cover" />
+            <img :src="item.images[0]" :alt="item.name" class="w-full h-48 object-cover" />
             <div class="p-6">
-              <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ rel.name }}</h3>
-              <p class="text-gray-600 dark:text-gray-400 mb-4">{{ rel.tagline }}</p>
+              <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ item.name }}</h3>
+              <p class="text-gray-600 dark:text-gray-400 mb-4">{{ item.tagline }}</p>
               <div class="flex justify-between items-center">
                 <span class="text-xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 text-transparent bg-clip-text">
-                  From ${{ rel.price['128GB'] }}
+                  From ${{ item.price['128GB'] }}
                 </span>
-                <router-link :to="`/product/${id}`" class="text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300 transition-colors duration-200">
+                <router-link :to="`/product/${item.id}`" class="text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300 transition-colors duration-200">
                   View Details →
                 </router-link>
               </div>
@@ -352,8 +360,8 @@ onMounted(() => {
         </div>
       </div>
     </section>
-  </div>
 
+  </div>
   <div v-else class="container mx-auto px-4 py-32 text-center">
     <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Product Not Found</h2>
     <p class="text-gray-600 dark:text-gray-400 mb-8">The product you're looking for doesn't exist or has been removed.</p>
@@ -376,13 +384,7 @@ onMounted(() => {
 }
 
 @keyframes slideUp {
-  from { 
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to { 
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>
