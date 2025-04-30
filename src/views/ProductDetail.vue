@@ -1,31 +1,47 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, RouteLocationNormalizedLoaded } from 'vue-router'
 
-const route = useRoute()
-const activeTab = ref('overview')
-const selectedColor = ref('silver')
-const selectedStorage = ref('128GB')
+// Define types
+type StorageOption = '128GB' | '256GB' | '512GB' | '1TB'
+type Tab = 'overview' | 'specs'
+type ProductID = 'flagship' | 'midrange' | 'lite'
 
-const colors = [
+interface Product {
+  name: string
+  tagline: string
+  description: string
+  price: Record<StorageOption, number | null>
+  images: string[]
+  features: string[]
+  specs: Record<string, string>
+}
+
+interface ColorOption {
+  id: string
+  name: string
+  hex: string
+}
+
+// Routing and state
+const route = useRoute<RouteLocationNormalizedLoaded<{ id: ProductID }>>()
+const productId = computed<ProductID>(() => route.params.id)
+
+// Data definitions
+const colors: ColorOption[] = [
   { id: 'silver', name: 'Silver', hex: '#e2e2e2' },
   { id: 'space-gray', name: 'Space Gray', hex: '#303234' },
-  { id: 'gold', name: 'Gold', hex: '#f3e5cd' },
+  { id: 'gold', name: 'Gold', hex: '#f3e5cd' }
 ]
 
-const storage = ['128GB', '256GB', '512GB', '1TB']
+const storageOptions: StorageOption[] = ['128GB', '256GB', '512GB', '1TB']
 
-const products = {
-  'flagship': {
+const products: Record<ProductID, Product> = {
+  flagship: {
     name: 'ProductX Pro',
     tagline: 'Our most powerful device ever.',
     description: 'Experience unprecedented performance with the ProductX Pro. Designed for professionals and power users who demand the very best technology has to offer.',
-    price: {
-      '128GB': 999,
-      '256GB': 1199,
-      '512GB': 1399,
-      '1TB': 1799
-    },
+    price: { '128GB': 999, '256GB': 1199, '512GB': 1399, '1TB': 1799 },
     images: [
       'https://images.pexels.com/photos/404280/pexels-photo-404280.jpeg?auto=compress&cs=tinysrgb&w=1200',
       'https://images.pexels.com/photos/3772585/pexels-photo-3772585.jpeg?auto=compress&cs=tinysrgb&w=1200',
@@ -51,16 +67,11 @@ const products = {
       connectivity: 'Wi-Fi 6E, Bluetooth 5.2, 5G cellular'
     }
   },
-  'midrange': {
+  midrange: {
     name: 'ProductX Air',
     tagline: 'Thin. Light. Powerful.',
     description: 'The perfect balance of portability and performance, the ProductX Air is designed for the on-the-go professional who needs reliability and power in a lightweight package.',
-    price: {
-      '128GB': 699,
-      '256GB': 899,
-      '512GB': 1099,
-      '1TB': 1399
-    },
+    price: { '128GB': 699, '256GB': 899, '512GB': 1099, '1TB': 1399 },
     images: [
       'https://images.pexels.com/photos/1779487/pexels-photo-1779487.jpeg?auto=compress&cs=tinysrgb&w=1200',
       'https://images.pexels.com/photos/129208/pexels-photo-129208.jpeg?auto=compress&cs=tinysrgb&w=1200',
@@ -86,16 +97,11 @@ const products = {
       connectivity: 'Wi-Fi 6, Bluetooth 5.0, 5G cellular'
     }
   },
-  'lite': {
+  lite: {
     name: 'ProductX Mini',
     tagline: 'Small but mighty.',
     description: 'Don\'t let its size fool you. The ProductX Mini packs serious performance into a compact design that fits anywhere and goes everywhere.',
-    price: {
-      '128GB': 399,
-      '256GB': 549,
-      '512GB': 749,
-      '1TB': null
-    },
+    price: { '128GB': 399, '256GB': 549, '512GB': 749, '1TB': null },
     images: [
       'https://images.pexels.com/photos/792345/pexels-photo-792345.jpeg?auto=compress&cs=tinysrgb&w=1200',
       'https://images.pexels.com/photos/191157/pexels-photo-191157.jpeg?auto=compress&cs=tinysrgb&w=1200',
@@ -123,32 +129,30 @@ const products = {
   }
 }
 
-const productId = computed(() => route.params.id as string)
-const product = computed(() => products[productId.value as keyof typeof products])
+// Reactive state
+const product = computed(() => products[productId.value])
+const activeTab = ref<Tab>('overview')
+const selectedColor = ref<ColorOption['id']>('silver')
+const selectedStorage = ref<StorageOption>('128GB')
 const activeImage = ref(0)
-const price = computed(() => {
-  const basePrice = product.value.price[selectedStorage.value as keyof typeof product.value.price]
-  if (basePrice === null) {
-    return 'Not Available'
-  }
-  return `$${basePrice}`
+
+// Computed price display
+const price = computed<string>(() => {
+  const basePrice = product.value.price[selectedStorage.value]
+  return basePrice === null ? 'Not Available' : `$${basePrice}`
 })
 
-const setTab = (tab: string) => {
-  activeTab.value = tab
-}
-
-const setImage = (index: number) => {
-  activeImage.value = index
-}
+// Handlers
+const setTab = (tab: Tab) => { activeTab.value = tab }
+const setImage = (index: number) => { activeImage.value = index }
 
 // Animation refs
 const imagesRef = ref<HTMLElement | null>(null)
 const detailsRef = ref<HTMLElement | null>(null)
 
 onMounted(() => {
-  if (imagesRef.value) imagesRef.value.classList.add('fade-in')
-  if (detailsRef.value) detailsRef.value.classList.add('slide-up')
+  imagesRef.value?.classList.add('fade-in')
+  detailsRef.value?.classList.add('slide-up')
 })
 </script>
 
@@ -164,51 +168,51 @@ onMounted(() => {
               <img :src="product.images[activeImage]" :alt="product.name" class="w-full h-auto object-cover" />
             </div>
             <div class="grid grid-cols-3 gap-4">
-              <div v-for="(image, index) in product.images" :key="index" 
+              <div
+                v-for="(img, idx) in product.images"
+                :key="idx"
+                @click="setImage(idx)"
                 :class="[
                   'cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200',
-                  activeImage === index 
-                    ? 'border-primary-600 dark:border-primary-400 shadow-md' 
+                  activeImage === idx
+                    ? 'border-primary-600 dark:border-primary-400 shadow-md'
                     : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
                 ]"
-                @click="setImage(index)"
               >
-                <img :src="image" :alt="`${product.name} view ${index + 1}`" class="w-full h-auto object-cover" />
+                <img :src="img" :alt="`${product.name} view ${idx + 1}`" class="w-full h-auto object-cover" />
               </div>
             </div>
           </div>
-          
+
           <!-- Product details -->
           <div ref="detailsRef" class="lg:w-1/2 opacity-0 transform translate-y-4 transition-all duration-500 delay-200">
-            <div class="mb-2">
-              <span class="bg-accent-500 text-white px-3 py-1 rounded-full text-xs font-semibold">NEW</span>
-            </div>
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">{{ product.name }}</h1>
+            <span class="bg-accent-500 text-white px-3 py-1 rounded-full text-xs font-semibold">NEW</span>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mt-2 mb-2">{{ product.name }}</h1>
             <p class="text-xl text-gray-600 dark:text-gray-400 mb-6">{{ product.tagline }}</p>
             <p class="text-gray-700 dark:text-gray-300 mb-8">{{ product.description }}</p>
-            
+
             <!-- Price -->
             <div class="mb-8">
               <span class="text-3xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 text-transparent bg-clip-text">
                 {{ price }}
               </span>
             </div>
-            
+
             <!-- Color selection -->
             <div class="mb-6">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3">Color</h3>
               <div class="flex space-x-3">
-                <button 
-                  v-for="color in colors" 
+                <button
+                  v-for="color in colors"
                   :key="color.id"
+                  @click="() => (selectedColor = color.id)"
                   :style="{ backgroundColor: color.hex }"
                   :class="[
                     'w-10 h-10 rounded-full border-2 transition-all duration-200 focus:outline-none',
-                    selectedColor === color.id 
-                      ? 'border-primary-600 dark:border-primary-400 ring-2 ring-primary-200 dark:ring-primary-900' 
+                    selectedColor === color.id
+                      ? 'border-primary-600 dark:border-primary-400 ring-2 ring-primary-200 dark:ring-primary-900'
                       : 'border-gray-300 dark:border-gray-600'
                   ]"
-                  @click="selectedColor = color.id"
                 >
                   <span class="sr-only">{{ color.name }}</span>
                 </button>
@@ -217,35 +221,35 @@ onMounted(() => {
                 Selected: {{ colors.find(c => c.id === selectedColor)?.name }}
               </p>
             </div>
-            
+
             <!-- Storage selection -->
             <div class="mb-8">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3">Storage</h3>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <button 
-                  v-for="size in storage" 
+                <button
+                  v-for="size in storageOptions"
                   :key="size"
+                  :disabled="product.price[size] === null"
+                  @click="() => product.price[size] !== null && (selectedStorage = size)"
                   :class="[
                     'py-3 px-4 rounded-lg border transition-all duration-200 focus:outline-none',
-                    product.price[size as keyof typeof product.price] === null
+                    product.price[size] === null
                       ? 'opacity-50 cursor-not-allowed border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-600'
                       : selectedStorage === size
                         ? 'border-primary-600 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
                         : 'border-gray-300 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700 text-gray-700 dark:text-gray-300'
                   ]"
-                  @click="product.price[size as keyof typeof product.price] !== null && (selectedStorage = size)"
-                  :disabled="product.price[size as keyof typeof product.price] === null"
                 >
                   {{ size }}
                 </button>
               </div>
             </div>
-            
-            <!-- Add to cart button -->
+
+            <!-- Add to cart -->
             <button class="w-full py-4 px-6 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors duration-200 mb-6">
               Add to Cart
             </button>
-            
+
             <!-- Delivery info -->
             <div class="flex items-center text-gray-600 dark:text-gray-400 mb-8">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -257,71 +261,61 @@ onMounted(() => {
         </div>
       </div>
     </section>
-    
-    <!-- Product details tabs -->
+
+    <!-- Tabs -->
     <section class="py-16 bg-gray-50 dark:bg-gray-800 transition-colors duration-300">
       <div class="container mx-auto px-4">
-        <!-- Tabs -->
         <div class="flex flex-wrap border-b border-gray-200 dark:border-gray-700 mb-8">
-          <button 
+          <button
+            @click="() => setTab('overview')"
             :class="[
               'py-3 px-6 text-lg font-medium border-b-2 focus:outline-none transition-colors duration-200',
               activeTab === 'overview'
                 ? 'border-primary-600 dark:border-primary-400 text-primary-600 dark:text-primary-400'
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             ]"
-            @click="setTab('overview')"
-          >
-            Overview
-          </button>
-          <button 
+          >Overview</button>
+          <button
+            @click="() => setTab('specs')"
             :class="[
               'py-3 px-6 text-lg font-medium border-b-2 focus:outline-none transition-colors duration-200',
               activeTab === 'specs'
                 ? 'border-primary-600 dark:border-primary-400 text-primary-600 dark:text-primary-400'
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             ]"
-            @click="setTab('specs')"
-          >
-            Specifications
-          </button>
+          >Specifications</button>
         </div>
-        
-        <!-- Tab content -->
+
         <div v-if="activeTab === 'overview'" class="fade-in">
           <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Key Features</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mb-12">
-            <div v-for="(feature, index) in product.features" :key="index" class="flex items-start">
+            <div v-for="(feat, i) in product.features" :key="i" class="flex items-start">
               <svg class="h-6 w-6 text-primary-600 dark:text-primary-400 mt-0.5 mr-3 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
               </svg>
-              <span class="text-gray-700 dark:text-gray-300">{{ feature }}</span>
+              <span class="text-gray-700 dark:text-gray-300">{{ feat }}</span>
             </div>
           </div>
-          
+
           <div class="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 transition-colors duration-300">
             <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Why Choose {{ product.name }}?</h3>
             <p class="text-gray-700 dark:text-gray-300 mb-4">
-              The {{ product.name }} represents the pinnacle of our technology and design philosophy. 
-              Every aspect has been carefully engineered to provide an exceptional user experience, 
-              from the stunning display to the powerful processor and all-day battery life.
+              The {{ product.name }} represents the pinnacle of our technology and design philosophy.
             </p>
             <p class="text-gray-700 dark:text-gray-300">
-              Whether you're a creative professional, a business user, or someone who values premium 
-              technology, the {{ product.name }} delivers performance and reliability you can count on, 
-              all in a beautiful package that's a joy to use.
+              Whether you're a creative professional, a business user, or someone who values premium technology, the {{ product.name }} delivers performance and reliability you can count on, all in a beautiful package that's a joy to use.
             </p>
           </div>
         </div>
-        
+
         <div v-if="activeTab === 'specs'" class="fade-in">
           <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Technical Specifications</h3>
           <div class="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden transition-colors duration-300">
             <div class="grid grid-cols-1 md:grid-cols-2">
-              <div v-for="(value, key) in product.specs" :key="key" class="border-b border-gray-200 dark:border-gray-700 last:border-b-0 md:even:border-l">
+              <div v-for="(val, key) in product.specs" :key="key" class="border-b border-gray-200 dark:border-gray-700 last:border-b-0 md:even:border-l">
                 <div class="p-4 md:p-6">
                   <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase mb-2">{{ key }}</h4>
-                  <p class="text-gray-900 dark:text-white">{{ value }}</p>
+                  <p class="text-gray-900 dark:text-white">{{ val }}</p>
                 </div>
               </div>
             </div>
@@ -329,22 +323,25 @@ onMounted(() => {
         </div>
       </div>
     </section>
-    
-    <!-- Related products section -->
+
+    <!-- Related products -->
     <section class="py-16 bg-white dark:bg-gray-900 transition-colors duration-300">
       <div class="container mx-auto px-4">
         <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">You May Also Like</h2>
-        
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div v-for="(relatedProduct, id) in products" :key="id" v-if="id !== productId" 
-            class="bg-gray-50 dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
-            <img :src="relatedProduct.images[0]" :alt="relatedProduct.name" class="w-full h-48 object-cover" />
+          <div
+            v-for="(rel, id) in products"
+            :key="id"
+            v-if="id !== productId"
+            class="bg-gray-50 dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
+          >
+            <img :src="rel.images[0]" :alt="rel.name" class="w-full h-48 object-cover" />
             <div class="p-6">
-              <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ relatedProduct.name }}</h3>
-              <p class="text-gray-600 dark:text-gray-400 mb-4">{{ relatedProduct.tagline }}</p>
+              <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ rel.name }}</h3>
+              <p class="text-gray-600 dark:text-gray-400 mb-4">{{ rel.tagline }}</p>
               <div class="flex justify-between items-center">
                 <span class="text-xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 text-transparent bg-clip-text">
-                  From ${{ relatedProduct.price['128GB'] }}
+                  From ${{ rel.price['128GB'] }}
                 </span>
                 <router-link :to="`/product/${id}`" class="text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300 transition-colors duration-200">
                   View Details →
@@ -356,7 +353,7 @@ onMounted(() => {
       </div>
     </section>
   </div>
-  
+
   <div v-else class="container mx-auto px-4 py-32 text-center">
     <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Product Not Found</h2>
     <p class="text-gray-600 dark:text-gray-400 mb-8">The product you're looking for doesn't exist or has been removed.</p>

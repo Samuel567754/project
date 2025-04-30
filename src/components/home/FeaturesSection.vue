@@ -28,41 +28,42 @@ const features = [
     id: 1,
     title: 'Cutting-Edge Performance',
     description: 'Experience blazing-fast performance with our advanced processing technology.',
-    icon: 'M13 10V3L4 14h7v7l9-11h-7z', // Lightning bolt
+    icon: 'M13 10V3L4 14h7v7l9-11h-7z',
   },
   {
     id: 2,
     title: 'Seamless Integration',
     description: 'Connects flawlessly with all your existing devices and smart home systems.',
-    icon: 'M21 16.42v3.536a1 1 0 01-.93.998c-.437.03-.794.046-1.07.046-8.837 0-16-7.163-16-16 0-.276.015-.633.046-1.07A1 1 0 014.044 3H7.58a.5.5 0 01.498.45c.023.23.044.413.064.552A13.901 13.901 0 0919.834 15.29c.139.02.322.041.552.064a.5.5 0 01.45.498z', // Phone
+    icon: 'M21 16.42v3.536a1 1 0 01-.93.998c-.437.03-.794.046-1.07.046-8.837 0-16-7.163-16-16 0-.276.015-.633.046-1.07A1 1 0 014.044 3H7.58a.5.5 0 01.498.45c.023.23.044.413.064.552A13.901 13.901 0 0919.834 15.29c.139.02.322.041.552.064a.5.5 0 01.45.498z',
   },
   {
     id: 3,
     title: 'Enhanced Security',
     description: 'Industry-leading security features keep your data safe and private.',
-    icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', // Shield Check
+    icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
   },
   {
     id: 4,
     title: 'Intuitive Interface',
     description: 'Simple, elegant design makes using our products a joy, not a chore.',
-    icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4', // Code
+    icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4',
   },
   {
     id: 5,
     title: 'Smart Adaptability',
     description: 'AI-powered features that learn from your habits to better serve your needs.',
-    icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z', // Light bulb
+    icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
   },
   {
     id: 6,
     title: 'Extended Battery Life',
     description: 'Go longer between charges with our energy-efficient design.',
-    icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', // Refresh
+    icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
   },
 ]
 
-const shouldAnimate = (index: number) => {
+// Rename unused param to _index to satisfy TypeScript
+const shouldAnimate = (_index: number) => {
   return props.isVisible && isInView.value
 }
 </script>

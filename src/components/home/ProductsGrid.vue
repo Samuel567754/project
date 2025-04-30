@@ -53,7 +53,8 @@ const products = [
   }
 ]
 
-const shouldAnimate = (index: number) => {
+// Rename unused param to _index
+const shouldAnimate = (_index: number) => {
   return props.isVisible && isInView.value
 }
 </script>
@@ -73,7 +74,7 @@ const shouldAnimate = (index: number) => {
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div v-for="(product, index) in products" :key="product.id" 
           :class="[
-            'bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1',
+            'bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700 transition-all duration-300 hover:shadow-xl',
           ]"
           :style="{ 
             opacity: shouldAnimate(index) ? 1 : 0,
