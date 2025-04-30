@@ -24,7 +24,7 @@ const closeMenu = () => {
         <!-- Logo -->
         <div class="flex-shrink-0">
           <router-link to="/" class="flex items-center" @click="closeMenu">
-            <span class="text-xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 text-transparent bg-clip-text">ProductX</span>
+            <span class="text-xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 text-transparent bg-clip-text">ChillTech Innovations</span>
           </router-link>
         </div>
         
